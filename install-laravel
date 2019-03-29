@@ -5,31 +5,103 @@ red=$(tput setaf 1)
 yellow=$(tput setaf 3)
 reset=$(tput sgr0)
 
-display() {
+displayMessage() {
 	echo
 	echo ----------------------------------------------
 	echo $type$message${reset}
 	echo ----------------------------------------------
 }
 
+launchingServer() {
+   message="Launching server... Enjoy!"
+	type=$green
+	displayMessage $message $type 
+
+   php artisan serve
+}
+
+npmProduction() {
+   message="Compiling JS and CSS files..."
+	type=$green
+	displayMessage $message $type 
+   sleep 2
+
+   npm run production
+   launchingServer
+}
+
+migrateAndSeed() {
+   message="Migrating and seeding..."
+	type=$green
+	displayMessage $message $type 
+   sleep 2
+
+   php artisan migrate --seed
+   npmProduction
+}
+
+generatingKey() {
+   message="Generating APP Key..."
+	type=$green
+	displayMessage $message $type 
+   sleep 2
+
+   php artisan key:generate
+   migrateAndSeed
+}
+
+installNpmPackages() {
+   message="Installing NPM Packages..."
+	type=$green
+	displayMessage $message $type 
+   sleep 2
+
+   npm install
+   generatingKey
+}
+
+installComposer() {
+	message="Installing Composer..."
+	type=$green
+	displayMessage $message $type 
+   sleep 2
+
+   composer install
+   installNpmPackages
+}
+
 prepareEnv() {
 	 DB_DATABASE_N="DB_DATABASE=$dbname" 
 	 DB_USERNAME_N="DB_USERNAME=$dbuser" 
 	 DB_PASSWORD_N="DB_PASSWORD=$dbpassword" 
-	 sed -i "s/DB_DATABASE=homestead/${DB_DATABASE_N}/g" .env 
-	 sed -i "s/DB_USERNAME=homestead/${DB_USERNAME_N}/g" .env 
-	 sed -i "s/DB_PASSWORD=secret/${DB_PASSWORD_N}/g" .env
+
+    if [[ "$OSTYPE" == "linux-gnu" ]]; then
+      sed -i "s/DB_DATABASE=homestead/${DB_DATABASE_N}/g" .env 
+      sed -i "s/DB_USERNAME=homestead/${DB_USERNAME_N}/g" .env 
+      sed -i "s/DB_PASSWORD=secret/${DB_PASSWORD_N}/g" .env
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+      sed -i '.bak' "s/DB_DATABASE=homestead/${DB_DATABASE_N}/g" .env 
+      sed -i '.bak' "s/DB_USERNAME=homestead/${DB_USERNAME_N}/g" .env 
+      sed -i '.bak' "s/DB_PASSWORD=secret/${DB_PASSWORD_N}/g" .env
+   else echo 'Please use a linux or mac machine to run this script'
+   fi
+
+    installComposer
 }
 
 duplicatingEnvExampleToEnv() {
-	message="Setting up .env"; type=$green; display $message $type
+	message="Setting up .env"; type=$green; displayMessage $message $type
 	cp .env.example .env
+   sleep 2
+
 	prepareEnv
 }
 
 createDb() {	
-	message="Creating database: $dbname"; type=$green; display "Creating database: $dbname" $green
+	message="Creating database: $dbname"; type=$green; displayMessage "Creating database: $dbname" $green
 	mysql --user=$dbuser --password=$dbpassword -e "create database $dbname;"
+   sleep 2
+
 	duplicatingEnvExampleToEnv
 }
 
@@ -65,11 +137,11 @@ checkCredentials() {
 getDbInfo() {
 	message="Setting up database"
 	type=$green
-	display $message $type 
+	displayMessage $message $type 
 
 	read -p ${yellow}'---> Database name: '${reset} dbname
 	read -p ${yellow}'---> Database user: '${reset} dbuser
-	read -p ${yellow}'---> Database password: '${reset} dbpassword
+	read -s -p ${yellow}'---> Database password: '${reset} dbpassword
 }
 
 settingUpDataBase() {
@@ -88,7 +160,5 @@ promptUserToCreateDB() {
 }
 
 promptUserToCreateDB
-
-
 
 
