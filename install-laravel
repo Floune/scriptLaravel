@@ -1,0 +1,94 @@
+#!/bin/bash
+
+green=$(tput setaf 2)
+red=$(tput setaf 1)
+yellow=$(tput setaf 3)
+reset=$(tput sgr0)
+
+display() {
+	echo
+	echo ----------------------------------------------
+	echo $type$message${reset}
+	echo ----------------------------------------------
+}
+
+prepareEnv() {
+	 DB_DATABASE_N="DB_DATABASE=$dbname" 
+	 DB_USERNAME_N="DB_USERNAME=$dbuser" 
+	 DB_PASSWORD_N="DB_PASSWORD=$dbpassword" 
+	 sed -i "s/DB_DATABASE=homestead/${DB_DATABASE_N}/g" .env 
+	 sed -i "s/DB_USERNAME=homestead/${DB_USERNAME_N}/g" .env 
+	 sed -i "s/DB_PASSWORD=secret/${DB_PASSWORD_N}/g" .env
+}
+
+duplicatingEnvExampleToEnv() {
+	message="Setting up .env"; type=$green; display $message $type
+	cp .env.example .env
+	prepareEnv
+}
+
+createDb() {	
+	message="Creating database: $dbname"; type=$green; display "Creating database: $dbname" $green
+	mysql --user=$dbuser --password=$dbpassword -e "create database $dbname;"
+	duplicatingEnvExampleToEnv
+}
+
+checkIfDbExists() {
+	RESULT=`mysql --user=$dbuser --password=$dbpassword -e "show databases" | grep -w $dbname`
+		if [ "$RESULT" = "$dbname" ]
+			then 
+				echo "${red}Database $dbname already exists, do you want to use it?${reset}";
+				select yn in "Yes" "No"; do
+					case $yn in
+						Yes ) duplicatingEnvExampleToEnv; break;;
+						No ) settingUpDataBase; exit;;
+					esac
+				done
+			else
+				createDb $dbuser $dbpassword $dbname
+		fi
+}
+
+checkCredentials() {
+	RESULT=$(mysql --user=$dbuser --password=$dbpassword -e "SHOW DATABASES;")
+	#vérifie l'exit status de la comamnde précédente
+	if [ $? -ne "0" ] 
+		then 	
+			echo "${red}wrong credentials${reset}";
+			settingUpDataBase
+	else
+		result="ok";
+		checkIfDbExists $dbuser $dbpassword $dbname
+	fi
+}
+
+getDbInfo() {
+	message="Setting up database"
+	type=$green
+	display $message $type 
+
+	read -p ${yellow}'---> Database name: '${reset} dbname
+	read -p ${yellow}'---> Database user: '${reset} dbuser
+	read -p ${yellow}'---> Database password: '${reset} dbpassword
+}
+
+settingUpDataBase() {
+	getDbInfo
+	checkCredentials
+}
+
+promptUserToCreateDB() {
+	echo ${yellow}"-----> Do you need to create a database for this project ?"${reset}
+	select yn in "Yes" "No"; do
+		case $yn in
+			Yes ) settingUpDataBase; break;;
+			No ) getDbInfo; exit;;
+		esac
+	done
+}
+
+promptUserToCreateDB
+
+
+
+
