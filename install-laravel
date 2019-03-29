@@ -5,6 +5,7 @@ red=$(tput setaf 1)
 yellow=$(tput setaf 3)
 reset=$(tput sgr0)
 
+
 displayMessage() {
 	echo
 	echo ----------------------------------------------
@@ -90,7 +91,7 @@ prepareEnv() {
 }
 
 duplicatingEnvExampleToEnv() {
-	message="Setting up .env"; type=$green; displayMessage $message $type
+	message="Setting up .env file"; type=$green; displayMessage $message $type
 	cp .env.example .env
    sleep 2
 
@@ -109,6 +110,7 @@ checkIfDbExists() {
 	RESULT=`mysql --user=$dbuser --password=$dbpassword -e "show databases" | grep -w $dbname`
 		if [ "$RESULT" = "$dbname" ]
 			then 
+            echo
 				echo "${red}Database $dbname already exists, do you want to use it?${reset}";
 				select yn in "Yes" "No"; do
 					case $yn in
@@ -135,7 +137,25 @@ checkCredentials() {
 }
 
 getDbInfo() {
-	message="Setting up database"
+
+   if [ -z "$FIRSTRUN" ]
+   then
+echo ' 
+
+
+    ____  __         ____           __        ____         
+   / __ \/ /        /  _____  _____/ /_____ _/ / ___  _____
+  / /_/ / /  ______ / // __ \/ ___/ __/ __ `/ / / _ \/ ___/
+ / ____/ /__/______/ // / / (__  / /_/ /_/ / / /  __/ /    
+/_/   /_____/    /___/_/ /_/____/\__/\__,_/_/_/\___/_/    
+---------------The Project Laravel Installer----------------
+
+
+';
+FIRSTRUN=1
+   fi
+
+	message="Setting up database ${reset}| ${yellow}A new database will be created if it doesn't exist"
 	type=$green
 	displayMessage $message $type 
 
@@ -149,16 +169,9 @@ settingUpDataBase() {
 	checkCredentials
 }
 
-promptUserToCreateDB() {
-	echo ${yellow}"-----> Do you need to create a database for this project ?"${reset}
-	select yn in "Yes" "No"; do
-		case $yn in
-			Yes ) settingUpDataBase; break;;
-			No ) getDbInfo; exit;;
-		esac
-	done
+start() {
+   settingUpDataBase
 }
 
-promptUserToCreateDB
-
+start
 
