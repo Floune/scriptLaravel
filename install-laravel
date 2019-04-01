@@ -111,13 +111,24 @@ checkIfDbExists() {
 		if [ "$RESULT" = "$dbname" ]
 			then 
             echo
-				echo "${red}Database $dbname already exists, do you want to use it?${reset}";
-				select yn in "Yes" "No"; do
-					case $yn in
-						Yes ) duplicatingEnvExampleToEnv; break;;
-						No ) settingUpDataBase; exit;;
-					esac
-				done
+				echo "${red} /!\ Database $dbname already exists, what do you want to do? /!\ ${reset}";
+
+            PS3="Select an option: "
+            options=("Use this database ($dbname) anyway" "Create/Use another database")
+            select opt in "${options[@]}"
+            do case $opt in
+               "Use this database ($dbname) anyway")
+               duplicatingEnvExampleToEnv
+               break
+               ;;
+               "Create/Use another database")
+               settingUpDataBase
+               break
+               ;;
+               *) echo invalid option
+               ;;
+            esac
+         done
 			else
 				createDb $dbuser $dbpassword $dbname
 		fi
@@ -137,9 +148,9 @@ checkCredentials() {
 }
 
 getDbInfo() {
-
    if [ -z "$FIRSTRUN" ]
    then
+   clear
 echo ' 
 
 
