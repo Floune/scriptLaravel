@@ -5,7 +5,7 @@
 # This script will install any cloned laravel project.
 
 # What it does :
-#    - creates a database if needed, or use an existing one (created prior to the install)
+#    - creates a database if needed, or use an existing one (created prior to the install, will drop its tables is chosen)
 #    - prepares the .env file. Creates one if it doesn't exist
 #    - installs composer
 #    - installs NPM packages
