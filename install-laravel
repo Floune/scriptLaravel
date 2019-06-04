@@ -18,11 +18,14 @@
 # - copy the script in your project folder
 # - run it by typing in your project folder from your terminal : ./install-laravel
 
-
-green=$(tput setaf 2)
+black=$(tput setaf 0)
 red=$(tput setaf 1)
+green=$(tput setaf 2)
 yellow=$(tput setaf 3)
 reset=$(tput sgr0)
+bgRed=$(tput setab 1)
+bgGreen=$(tput setab 2)
+bgYellow=$(tput setab 3)
 
 envContent="APP_NAME=Laravel\nAPP_ENV=local\nAPP_KEY=\nAPP_DEBUG=true\nAPP_LOG_LEVEL=debug\nAPP_URL=http://localhost\n\nDB_CONNECTION=mysql\nDB_HOST=127.0.0.1\nDB_PORT=3306\nDB_DATABASE=homestead\nDB_USERNAME=homestead\nDB_PASSWORD=secret\n\nBROADCAST_DRIVER=log\nCACHE_DRIVER=file\nSESSION_DRIVER=file\nQUEUE_DRIVER=sync\n\nREDIS_HOST=127.0.0.1\nREDIS_PASSWORD=null\nREDIS_PORT=6379\n\nMAIL_DRIVER=\nMAIL_HOST=\nMAIL_PORT=\nMAIL_USERNAME=null\nMAIL_PASSWORD=null\nMAIL_ENCRYPTION=null\n\nPUSHER_APP_ID=\nPUSHER_APP_KEY=\nPUSHER_APP_SECRET=\n\nMAILGUN_DOMAIN=\nMAILGUN_SECRET=\n\nDEBUGBAR_ENABLED=false\nSENTRY_LARAVEL_DSN=\n\nMAIL_FROM_ADDRESS=\nMAIL_FROM_NAME=\n
 "
@@ -31,6 +34,19 @@ displayMessage() {
 	echo ----------------------------------------------
 	echo $type$message${reset}
 	echo ----------------------------------------------
+}
+
+displayError() {
+   echo "${bgRed}${black} ERROR ${reset}"
+}
+
+displayWarning() {
+   echo "${bgYellow}${black} WARNING ${reset}"
+}
+
+displayDone() {
+   echo "${bgGreen}${black} DONE ${reset}"
+   sleep 1
 }
 
 launchingServer() {
@@ -42,6 +58,7 @@ launchingServer() {
 }
 
 npmProduction() {
+   displayDone
    message="Compiling JS and CSS files..."
 	type=$green
 	displayMessage $message $type 
@@ -52,6 +69,7 @@ npmProduction() {
 }
 
 migrateAndSeed() {
+   displayDone
    message="Migrating and seeding..."
 	type=$green
 	displayMessage $message $type 
@@ -62,6 +80,7 @@ migrateAndSeed() {
 }
 
 generatingKey() {
+   displayDone
    message="Generating APP Key..."
 	type=$green
 	displayMessage $message $type 
@@ -72,6 +91,7 @@ generatingKey() {
 }
 
 installNpmPackages() {
+   displayDone
    message="Installing NPM Packages..."
 	type=$green
 	displayMessage $message $type 
@@ -117,8 +137,7 @@ duplicatingEnvExampleToEnv() {
    if test -f "$FILE"; 
    then
       cp .env.example .env
-      echo "| ${green} Done ${resent}"
-      sleep 1
+      displayDone 
 	   prepareEnv $dbname $dbuser $dbpassword
    else 
       echo "| ${yellow} no .env.example file found in projet directory, creating one ${reset}";
@@ -126,8 +145,7 @@ duplicatingEnvExampleToEnv() {
       echo -e $envContent >> $FILE
       cp .env.example .env
       sleep 2
-      echo "| ${green} Done ${resent}"
-      sleep 1
+      displayDone
 	   prepareEnv $dbname $dbuser $dbpassword
    fi
 }
@@ -135,7 +153,8 @@ duplicatingEnvExampleToEnv() {
 createDb() {	
 	message="Creating database: $dbname"; type=$green; displayMessage "Creating database: $dbname" $green
 	mysql --user=$dbuser --password=$dbpassword -e "create database $dbname;"
-   sleep 2
+   sleep 1
+   displayDone
 
 	duplicatingEnvExampleToEnv
 }
@@ -145,7 +164,7 @@ checkIfDbExists() {
 		if [ "$RESULT" = "$dbname" ]
 			then 
             echo
-				echo "${red} /!\ Database $dbname already exists, what do you want to do? /!\ ${reset}";
+				echo "${bgYellow}${black} WARNING ${reset} ${red} /!\ Database $dbname already exists, what do you want to do? /!\ ${reset}";
 
             PS3="Select an option (1 or 2): "
             options=("Use this database ($dbname) anyway, all tables will be droped" "Create/Use another database")
@@ -199,8 +218,7 @@ header() {
 	type=$green
 	displayMessage $message $type 
    sleep 1;
-   echo "| ${green} Done ${reset}"
-   sleep 1;
+   displayDone
 }
 
 getDbInfo() {
