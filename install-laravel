@@ -46,7 +46,6 @@ displayWarning() {
 
 displayDone() {
    echo "${bgGreen}${black} DONE ${reset}"
-   sleep 1
 }
 
 launchingServer() {
@@ -140,7 +139,7 @@ duplicatingEnvExampleToEnv() {
       displayDone 
 	   prepareEnv $dbname $dbuser $dbpassword
    else 
-      echo "| ${yellow} no .env.example file found in projet directory, creating one ${reset}";
+      echo "${yellow} no .env.example file found in projet directory, creating one ${reset}";
       touch .env.example
       echo -e $envContent >> $FILE
       cp .env.example .env
