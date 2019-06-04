@@ -220,13 +220,13 @@ FIRSTRUN=1
 }
 
 isThisNotAProjectLaravel() {
-   PACKAGE_VERSION=$(cat composer.json \
+   LARAVEL_VERSION=$(cat composer.json \
    | grep laravel/framework \
    | head -2 \
    | awk -F: '{ print $2 }' \
    | sed 's/[",]//g' \
    | tr -d '[[:space:]]')
-   if [ -z "$PACKAGE_VERSION" ]; then
+   if [ -z "$LARAVEL_VERSION" ]; then
       return
    fi 
       false
