@@ -24,7 +24,8 @@ red=$(tput setaf 1)
 yellow=$(tput setaf 3)
 reset=$(tput sgr0)
 
-
+envContent="APP_NAME=Laravel\nAPP_ENV=local\nAPP_KEY=\nAPP_DEBUG=true\nAPP_LOG_LEVEL=debug\nAPP_URL=http://localhost\n\nDB_CONNECTION=mysql\nDB_HOST=127.0.0.1\nDB_PORT=3306\nDB_DATABASE=homestead\nDB_USERNAME=homestead\nDB_PASSWORD=secret\n\nBROADCAST_DRIVER=log\nCACHE_DRIVER=file\nSESSION_DRIVER=file\nQUEUE_DRIVER=sync\n\nREDIS_HOST=127.0.0.1\nREDIS_PASSWORD=null\nREDIS_PORT=6379\n\nMAIL_DRIVER=\nMAIL_HOST=\nMAIL_PORT=\nMAIL_USERNAME=null\nMAIL_PASSWORD=null\nMAIL_ENCRYPTION=null\n\nPUSHER_APP_ID=\nPUSHER_APP_KEY=\nPUSHER_APP_SECRET=\n\nMAILGUN_DOMAIN=\nMAILGUN_SECRET=\n\nDEBUGBAR_ENABLED=false\nSENTRY_LARAVEL_DSN=\n\nMAIL_FROM_ADDRESS=\nMAIL_FROM_NAME=\n
+"
 displayMessage() {
 	echo
 	echo ----------------------------------------------
@@ -56,7 +57,7 @@ migrateAndSeed() {
 	displayMessage $message $type 
    sleep 2
 
-   php artisan migrate --seed
+   php artisan migrate:fresh --seed
    npmProduction
 }
 
@@ -87,6 +88,7 @@ installComposer() {
    sleep 2
 
    composer install
+   
    installNpmPackages
 }
 
@@ -103,18 +105,32 @@ prepareEnv() {
       sed -i '.bak' "s/DB_DATABASE=homestead/${DB_DATABASE_N}/g" .env 
       sed -i '.bak' "s/DB_USERNAME=homestead/${DB_USERNAME_N}/g" .env 
       sed -i '.bak' "s/DB_PASSWORD=secret/${DB_PASSWORD_N}/g" .env
-   else echo 'Please use a linux or mac machine to run this script'
+    else echo 'Please use a linux or mac machine to run this script'
    fi
 
     installComposer
 }
 
 duplicatingEnvExampleToEnv() {
-	message="Setting up .env file"; type=$green; displayMessage $message $type
-	cp .env.example .env
-   sleep 2
-
-	prepareEnv
+   message="Setting up .env file"; type=$green; displayMessage $message $type
+   sleep 1
+   FILE=.env.example
+   if test -f "$FILE"; 
+   then
+      cp .env.example .env
+      echo "| ${green} Done ${resent}"
+      sleep 1
+	   prepareEnv $dbname $dbuser $dbpassword
+   else 
+      echo "| ${yellow} no .env.example file found in projet directory, creating one ${reset}";
+      touch .env.example
+      echo -e $envContent >> $FILE
+      cp .env.example .env
+      sleep 2
+      echo "| ${green} Done ${resent}"
+      sleep 1
+	   prepareEnv $dbname $dbuser $dbpassword
+   fi
 }
 
 createDb() {	
@@ -132,11 +148,11 @@ checkIfDbExists() {
             echo
 				echo "${red} /!\ Database $dbname already exists, what do you want to do? /!\ ${reset}";
 
-            PS3="Select an option: "
-            options=("Use this database ($dbname) anyway" "Create/Use another database")
+            PS3="Select an option (1 or 2): "
+            options=("Use this database ($dbname) anyway, all tables will be droped" "Create/Use another database")
             select opt in "${options[@]}"
             do case $opt in
-               "Use this database ($dbname) anyway")
+               "Use this database ($dbname) anyway, all tables will be droped")
                duplicatingEnvExampleToEnv
                break
                ;;
@@ -166,11 +182,8 @@ checkCredentials() {
 	fi
 }
 
-getDbInfo() {
-   if [ -z "$FIRSTRUN" ]
-   then
-   clear
-echo ' 
+header() {
+   echo ' 
 
 
     ____  __         ____           __        ____         
@@ -181,10 +194,23 @@ echo '
 ---------------The Project Laravel Installer----------------
 
 
-';
+   '
+   
+	message="${yellow}Checking if the directory container a laravel project"
+	type=$green
+	displayMessage $message $type 
+   sleep 1;
+   echo "| ${green} Done ${reset}"
+   sleep 1;
+}
+
+getDbInfo() {
+   if [ -z "$FIRSTRUN" ]
+   then
+   clear
+   header
 FIRSTRUN=1
    fi
-
 	message="Setting up database ${reset}| ${yellow}A new database will be created if it doesn't exist"
 	type=$green
 	displayMessage $message $type 
@@ -194,9 +220,30 @@ FIRSTRUN=1
 	read -s -p ${yellow}'---> Database password: '${reset} dbpassword
 }
 
+isThisNotAProjectLaravel() {
+   PACKAGE_VERSION=$(cat composer.json \
+   | grep laravel/framework \
+   | head -2 \
+   | awk -F: '{ print $2 }' \
+   | sed 's/[",]//g' \
+   | tr -d '[[:space:]]')
+   # echo $PACKAGE_VERSION
+   if [ -z "$PACKAGE_VERSION" ]; then
+      return
+   fi 
+      false
+}
+
 settingUpDataBase() {
-	getDbInfo
-	checkCredentials
+   if isThisNotAProjectLaravel;
+   then 
+      clear
+      header
+      message="The directory doesn't seem to contain a Laravel project"; type=$red; displayMessage $message $type
+   else
+      getDbInfo
+      checkCredentials
+   fi
 }
 
 start() {
