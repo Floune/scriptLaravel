@@ -5,7 +5,7 @@
 # This script will install any cloned laravel project.
 
 # What it does :
-#    - creates a database if needed, or use an existing one (created prior to the install, will drop its tables is chosen)
+#    - creates a database if needed, or use an existing one (created prior to the install, will drop its tables if chosen)
 #    - prepares the .env file. Creates one if it doesn't exist
 #    - installs composer
 #    - installs NPM packages
@@ -37,15 +37,15 @@ displayMessage() {
 }
 
 displayError() {
-   echo "${bgRed}${black} ERROR ${reset}"
+   echo "${bgRed}${black} ERROR ${reset} ${optionnalMessage}"
 }
 
 displayWarning() {
-   echo "${bgYellow}${black} WARNING ${reset}"
+   echo "${bgYellow}${black} WARNING ${reset} ${optionnalMessage}"
 }
 
 displayDone() {
-   echo "${bgGreen}${black} DONE ${reset}"
+   echo "${bgGreen}${black} DONE ${reset} ${optionnalMessage}"
 }
 
 launchingServer() {
@@ -210,14 +210,11 @@ header() {
 /_/   /_____/    /___/_/ /_/____/\__/\__,_/_/_/\___/_/    
 ---------------The Project Laravel Installer----------------
 
-
    '
-   
-	message="${yellow}Checking if the directory container a laravel project"
-	type=$green
+	message="Checking if the directory contains a laravel project"
+	type=$yellow
 	displayMessage $message $type 
    sleep 1;
-   displayDone
 }
 
 getDbInfo() {
@@ -254,8 +251,11 @@ settingUpDataBase() {
    then 
       clear
       header
-      message="The directory doesn't seem to contain a Laravel project"; type=$red; displayMessage $message $type
+      optionnalMessage="The directory doesn't seem to contain a Laravel project"
+      displayError $optionnalMessage
    else
+      optionnalMessage="plop"
+      displayDone $optionnalMessage
       getDbInfo
       checkCredentials
    fi
